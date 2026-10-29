@@ -63,10 +63,8 @@ const sections = [
     {title:'3.2 Horários', questions:[
       weekGrid('3.2.1','Horário de funcionamento do salão em cada dia'),
       q('3.2.2','As mechas levam de 4 a 5 horas, mas o turno da manhã citado na reunião vai das 09h30 às 12h00. Qual é o horário real de início e fim dos turnos de mechas (manhã e tarde)?'),
-      q('3.2.3','Os atendimentos começam em horários fixos? (ex.: de 30 em 30 minutos)','text'),
-      q('3.2.4','Com quanta antecedência mínima a cliente pode agendar? E até quantos dias à frente?','text'),
-      choice('3.2.5','Quando chegar mensagem fora do horário, o que a IA deve fazer?',['Atender normalmente e agendar','Atender e avisar que a equipe confirma no próximo horário','Informar o horário de funcionamento','Outro'],{other:true}),
-      q('3.2.6','Em que horário a equipe responde o WhatsApp?','text')
+      q('3.2.3','Com quanta antecedência mínima a cliente pode agendar? E até quantos dias à frente?','text'),
+      q('3.2.4','Em que horário a equipe responde o WhatsApp?','text')
     ]}
   ]},
   {title:'4. Serviços', subsections:[
@@ -75,7 +73,15 @@ const sections = [
       yesNo('4.1.2','O salão vende produtos (o Instagram tem o destaque “Produtos”)?',{followupOn:'Sim',followupId:'4.1.2a',followupText:'Quais produtos e a IA pode informar preços?'}),
       choice('4.1.3','Como é calculado o valor no cartão de crédito?',['Acréscimo percentual sobre o valor do Pix',CREDIT_TABLE,'Outro'],{other:true,followupOn:'Acréscimo percentual sobre o valor do Pix',followupId:'4.1.3a',followupText:'Qual percentual?'})
     ]},
-    {title:'4.2 Ficha de cada serviço', repeater:'services', description:'A lista já vem com os serviços citados na reunião e no Instagram. Complete preço, duração e tempo de agenda, remova o que não existir e adicione o que faltar.'}
+    {title:'4.2 Regras por serviço', serviceChecks:true, description:'Marque os serviços que se encaixam em cada regra. A lista vem das fichas da seção 4.3 e já está marcada com o que foi combinado na reunião. Deixe em branco quando nenhum se encaixar.', questions:[
+      q('4.2.1','Quais serviços têm preço “a partir de” (valor final só depois da avaliação)? Os não marcados têm preço fixo.','services'),
+      q('4.2.2','Quais serviços exigem avaliação presencial antes de agendar?','services'),
+      q('4.2.3','Em quais a avaliação é só recomendada (a IA sugere, mas pode agendar direto)?','services'),
+      q('4.2.4','Em quais a IA só pré-agenda e a equipe confirma o horário?','services'),
+      q('4.2.5','Quais só a equipe pode agendar? Nos serviços sem marcação aqui e na pergunta anterior, a IA agenda direto.','services'),
+      q('4.2.6','Para quais serviços há foto de antes e depois para a IA enviar?','services')
+    ]},
+    {title:'4.3 Ficha de cada serviço', repeater:'services', description:'A lista já vem com os serviços citados na reunião e no Instagram. Complete preço e duração, remova o que não existir e adicione o que faltar.'}
   ]},
   {title:'5. Equipe e responsáveis', subsections:[
     {title:'5.1 Agendas', questions:[
@@ -96,7 +102,7 @@ const sections = [
     ]},
     {title:'6.3 Serviços que não podem ser feitos juntos', repeater:'incompat', description:'Uma ficha para cada combinação proibida no mesmo dia ou que exige intervalo. Ex.: progressiva + mechas.'},
     {title:'6.4 Fotos de antes e depois', questions:[
-      choice('6.4.1','Além do orçamento de mechas, quando a IA deve enviar fotos de antes e depois?',['Só no orçamento de mechas e química','Sempre que a cliente perguntar de um serviço que tenha foto','Só quando a cliente pedir','Outro'],{other:true}),
+      choice('6.4.1','Além do orçamento de mechas, quando a IA deve enviar fotos de antes e depois?',['Só no orçamento de mechas e química','Sempre que a cliente perguntar de um serviço marcado na 4.2.6','Só quando a cliente pedir','Outro'],{other:true}),
       yesNo('6.4.2','As clientes das fotos autorizaram o uso?')
     ]}
   ]},
@@ -162,20 +168,13 @@ const sections = [
 ];
 
 const repeaters = {
-  services:{itemLabel:'Serviço', addLabel:'+ Adicionar outro serviço', affects:'pros', questions:[
-    q('4.2.1','Nome do serviço','text',{redraw:'pros'}),
-    pick('4.2.2','Categoria',['Cabelo','Estética e corpo','Sobrancelha','Unhas','Maquiagem e penteado','Outro']),
-    q('4.2.3','Descrição que a IA deve usar'),
-    pick('4.2.4','Tipo de preço',['Preço fixo',FROM_PRICE]),
-    q('4.2.5','Preço no Pix ou dinheiro (o valor mínimo, se for “a partir de”)','text'),
-    q('4.2.6','Preço no cartão de crédito','text',{condition:{id:'4.1.3',equals:CREDIT_TABLE}}),
-    q('4.2.7','Duração média','text'),
-    q('4.2.8','Tempo a reservar na agenda (com preparo e limpeza)','text'),
-    pick('4.2.9','Precisa de avaliação presencial antes?',['Sim, obrigatória','Recomendada','Não']),
-    pick('4.2.10','Como a IA pode agendar?',['A IA agenda direto',PRE_BOOK,'Somente a equipe agenda']),
-    q('4.2.11','O que a IA precisa perguntar antes de passar preço e horário?','text'),
-    q('4.2.12','Preparo ou cuidados que a cliente precisa saber'),
-    pick('4.2.13','Tem foto de antes e depois para a IA enviar?',['Sim, já enviada','Vou enviar','Não'])
+  services:{itemLabel:'Serviço', addLabel:'+ Adicionar outro serviço', affects:['checks','pros'], questions:[
+    q('4.3.1','Nome do serviço','text',{redraw:['checks','pros']}),
+    q('4.3.2','Preço no Pix ou dinheiro (o valor mínimo, se for “a partir de”)','text'),
+    q('4.3.3','Preço no cartão de crédito','text',{condition:{id:'4.1.3',equals:CREDIT_TABLE}}),
+    q('4.3.4','Duração (tempo a reservar na agenda)','text'),
+    q('4.3.5','Descrição que a IA deve usar'),
+    q('4.3.6','Observações para a IA (o que perguntar antes, preparo, cuidados)')
   ]},
   pros:{itemLabel:'Profissional', addLabel:'+ Adicionar profissional', questions:[
     q('5.2.1','Nome','text'),
@@ -191,28 +190,30 @@ const repeaters = {
   ]}
 };
 
-const service = (name,cat,extra={}) => ({'4.2.1':name,'4.2.2':cat,...extra});
-const chemical = {'4.2.4':FROM_PRICE,'4.2.9':'Sim, obrigatória'};
-const highlights = {...chemical,'4.2.7':'4 a 5 horas','4.2.8':'Meio período','4.2.10':PRE_BOOK,'4.2.11':'Tipo de mecha e há quanto tempo fez a última química','4.2.12':'Sempre é feito teste de mechas antes.','4.2.13':'Vou enviar'};
-const nails = {'4.2.11':'Se é só mão, só pé ou pé e mão'};
+// A categoria não é perguntada: vem da lista inicial e vai só para a exportação.
+const service = (name,category,extra={}) => ({'4.3.1':name,category,...extra});
+const highlights = {'4.3.4':'4 a 5 horas (meio período)','4.3.6':'Perguntar o tipo de mecha e há quanto tempo fez a última química. Sempre é feito teste de mechas antes.'};
+const nails = {'4.3.6':'Perguntar se é só mão, só pé ou pé e mão.'};
+const CHEMICAL = ['Mechas loiras','Morena iluminada','Coloração','Progressiva'], HIGHLIGHTS = ['Mechas loiras','Morena iluminada'];
+const SEED_CHECKS = {'4.2.1':CHEMICAL,'4.2.2':CHEMICAL,'4.2.4':HIGHLIGHTS,'4.2.6':HIGHLIGHTS};
 const SEED_SERVICES = [
   service('Mechas loiras','Cabelo',highlights),
   service('Morena iluminada','Cabelo',highlights),
-  service('Coloração','Cabelo',chemical),
-  service('Progressiva','Cabelo',chemical),
+  service('Coloração','Cabelo'),
+  service('Progressiva','Cabelo'),
   service('Realinhamento capilar','Cabelo'),
   service('Corte','Cabelo'),
   service('Escova','Cabelo'),
-  service('Terapia capilar','Cabelo',{'4.2.3':'Atendimento personalizado'}),
+  service('Terapia capilar','Cabelo',{'4.3.5':'Atendimento personalizado'}),
   service('Cronograma capilar','Cabelo'),
   service('Limpeza de pele','Estética e corpo'),
   service('Drenagem','Estética e corpo'),
   service('Massagem modeladora','Estética e corpo'),
   service('Massagem relaxante','Estética e corpo'),
-  service('Design de sobrancelha','Sobrancelha',{'4.2.3':'Somente design (o salão não faz henna).'}),
-  service('Mão tradicional','Unhas',{...nails,'4.2.3':'Cutilagem e esmaltação tradicional.'}),
-  service('Pé tradicional','Unhas',{...nails,'4.2.3':'Cutilagem e esmaltação tradicional.'}),
-  service('Pé e mão tradicional','Unhas',{...nails,'4.2.4':'Preço fixo','4.2.5':'R$ 57,00'}),
+  service('Design de sobrancelha','Sobrancelha',{'4.3.5':'Somente design (o salão não faz henna).'}),
+  service('Mão tradicional','Unhas',{...nails,'4.3.5':'Cutilagem e esmaltação tradicional.'}),
+  service('Pé tradicional','Unhas',{...nails,'4.3.5':'Cutilagem e esmaltação tradicional.'}),
+  service('Pé e mão tradicional','Unhas',{...nails,'4.3.2':'R$ 57,00'}),
   service('Spa dos pés','Unhas'),
   service('Plástica dos pés','Unhas'),
   service('Maquiagem','Maquiagem e penteado'),
@@ -228,17 +229,54 @@ const scenarios = [
 ];
 
 const emptyState = () => ({
-  answers:{},
+  answers:Object.fromEntries(Object.entries(SEED_CHECKS).map(([id,names])=>[id,[...names]])),
   repeaters:{services:SEED_SERVICES.map(s=>({...s})), pros:[{'5.2.1':'César'},{'5.2.1':'Ítalo'},{},{}], incompat:[{}]},
-  scenarios:{}, meta:{}, final:{}
+  scenarios:{}, meta:{}, final:{}, schema:4
 });
 const repeaterDrawers = {};
 let state = loadState();
 
 function loadState(){
-  try { const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)); if(saved) return {...emptyState(),...saved}; } catch {}
+  try { const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)); if(saved) return {...emptyState(),...migrate(saved)}; } catch {}
   return emptyState();
 }
+// Respostas salvas em versões anteriores do questionário:
+// v2 → v3: saíram 3.2.3 (horários fixos) e 3.2.5 (fora do horário); 3.2.4 e 3.2.6 viraram 3.2.3 e 3.2.4.
+// v3 → v4: as escolhas repetidas em cada ficha de serviço viraram as listas de marcação 4.2.x; as fichas passaram a 4.3.x.
+function migrate(saved){
+  const version=saved.schema||2;
+  if(version>=4) return saved;
+  const old=saved.answers||{}, answers={...old}; let repeaters=saved.repeaters;
+  if(version<3){
+    ['3.2.3','3.2.4','3.2.5','3.2.6'].forEach(id=>{ delete answers[id]; delete answers[id+'__other']; });
+    Object.entries({'3.2.4':'3.2.3','3.2.6':'3.2.4'}).forEach(([from,to])=>{ if(from in old) answers[to]=old[from]; });
+  }
+  const oldServices=repeaters?.services;
+  if(Array.isArray(oldServices)){
+    const name=s=>String(s['4.2.1']||'').trim();
+    const marked=(key,values)=>oldServices.filter(s=>name(s)&&values.includes(s[key])).map(name);
+    Object.assign(answers,{'4.2.1':marked('4.2.4',[FROM_PRICE]), '4.2.2':marked('4.2.9',['Sim, obrigatória']), '4.2.3':marked('4.2.9',['Recomendada']),
+      '4.2.4':marked('4.2.10',[PRE_BOOK]), '4.2.5':marked('4.2.10',['Somente a equipe agenda']), '4.2.6':marked('4.2.13',['Sim, já enviada','Vou enviar'])});
+    const join=(parts,sep)=>parts.filter(p=>String(p||'').trim()).join(sep);
+    const services=oldServices.map(s=>Object.fromEntries(Object.entries({
+      '4.3.1':s['4.2.1'], category:s['4.2.2'], '4.3.2':s['4.2.5'], '4.3.3':s['4.2.6'],
+      '4.3.4':join([s['4.2.7'], s['4.2.8']&&s['4.2.8']!==s['4.2.7']?`reservar na agenda: ${s['4.2.8']}`:''],' — '),
+      '4.3.5':s['4.2.3'], '4.3.6':join([s['4.2.11']&&`Perguntar antes: ${s['4.2.11']}`, s['4.2.12']],' ')
+    }).filter(([,v])=>isAnsweredValue(v))));
+    repeaters={...repeaters, services};
+  }
+  return {...saved, answers, repeaters, schema:4};
+}
+// Mantém as listas de marcação em dia quando um serviço é renomeado (to) ou removido (to vazio).
+function renameService(from,to){
+  if(!from||from===to) return;
+  const swap=list=>Array.isArray(list)?[...new Set(list.map(x=>x===from?to:x).filter(Boolean))]:list;
+  serviceCheckIds().forEach(id=>{ if(state.answers[id]) state.answers[id]=swap(state.answers[id]); });
+  (state.repeaters.pros||[]).forEach(p=>{ if(p['5.2.2']) p['5.2.2']=swap(p['5.2.2']); });
+  saveState();
+}
+function serviceCheckIds(){ return sections.flatMap(s=>s.subsections).filter(sub=>sub.serviceChecks).flatMap(sub=>sub.questions.map(x=>x.id)); }
+const redrawAll = keys => [].concat(keys||[]).forEach(k=>repeaterDrawers[k]?.());
 function saveState(){
   collectFixed();
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
@@ -259,7 +297,7 @@ function conditionMet(cond){
   if(cond.notIn) return isAnsweredValue(v)&&!cond.notIn.includes(v);
   return true;
 }
-function serviceNames(){ return (state.repeaters.services||[]).map(s=>String(s['4.2.1']||'').trim()).filter(Boolean); }
+function serviceNames(){ return (state.repeaters.services||[]).map(s=>String(s['4.3.1']||'').trim()).filter(Boolean); }
 
 function render(){
   const host=document.getElementById('questionnaire'); host.innerHTML='';
@@ -277,6 +315,11 @@ function render(){
       if(sub.known){ const ul=document.createElement('ul'); ul.className='known-list'; sub.known.forEach(t=>{ const li=document.createElement('li'); li.textContent=t; ul.appendChild(li); }); s.appendChild(ul); }
       if(sub.repeater) renderRepeater(s,sub.repeater);
       else if(sub.scenarios) renderScenarios(s);
+      else if(sub.serviceChecks){
+        const wrap=document.createElement('div');
+        repeaterDrawers.checks=()=>{ wrap.innerHTML=''; sub.questions.forEach(item=>wrap.appendChild(renderQuestion(item))); };
+        repeaterDrawers.checks(); s.appendChild(wrap);
+      }
       else sub.questions.forEach(item=>s.appendChild(renderQuestion(item)));
       box.appendChild(s);
     });
@@ -337,7 +380,10 @@ function renderQuestion(item, store=state.answers, prefix='', quick=true){
     if(item.type==='text') control.type='text'; else control.rows=3;
     control.value=saved; control.dataset.field=fieldKey;
     control.addEventListener('input',()=>{store[item.id]=control.value; saveState();});
-    if(item.redraw) control.addEventListener('change',()=>repeaterDrawers[item.redraw]?.());
+    if(item.redraw){
+      let before=control.value.trim();
+      control.addEventListener('change',()=>{ renameService(before,control.value.trim()); before=control.value.trim(); redrawAll(item.redraw); });
+    }
     card.appendChild(control);
     if(quick && item.quick.length) addQuickButtons(card,control,store,item.id,item.quick);
   }
@@ -382,11 +428,11 @@ function renderRepeater(container,key){
       const head=document.createElement('div'); head.className='repeat-head';
       const name=item[def.questions[0].id];
       const title=document.createElement('strong'); title.textContent=`${def.itemLabel} ${i+1}${name?` — ${name}`:''}`; head.appendChild(title);
-      if(list.length>1){ const rm=document.createElement('button'); rm.type='button'; rm.className='mini-btn remove-btn'; rm.textContent='Remover'; rm.onclick=()=>{list.splice(i,1);saveState();draw();}; head.appendChild(rm); }
+      if(list.length>1){ const rm=document.createElement('button'); rm.type='button'; rm.className='mini-btn remove-btn'; rm.textContent='Remover'; rm.onclick=()=>{list.splice(i,1); if(key==='services') renameService(String(name||'').trim(),''); saveState();draw();}; head.appendChild(rm); }
       box.appendChild(head); def.questions.forEach(itemQ=>box.appendChild(renderQuestion(itemQ,item,`${key}-${i}-`,false))); wrap.appendChild(box);
     });
     const add=document.createElement('button'); add.type='button'; add.className='add-btn'; add.textContent=def.addLabel; add.onclick=()=>{list.push({});saveState();draw();}; wrap.appendChild(add);
-    if(def.affects) repeaterDrawers[def.affects]?.();
+    redrawAll(def.affects);
     applyVisibility();
   };
   repeaterDrawers[key]=draw;
@@ -505,17 +551,21 @@ function filled(list){ return (list||[]).filter(x=>Object.values(x).some(isAnswe
 function buildSystemExport(){
   saveState();
   const a=ans; const owners=a('5.1.2')||{};
-  const services=filled(state.repeaters.services).filter(s=>isAnsweredValue(s['4.2.1']));
+  const services=filled(state.repeaters.services).filter(s=>isAnsweredValue(s['4.3.1']));
   const pros=filled(state.repeaters.pros).filter(p=>isAnsweredValue(p['5.2.1']));
   const creditTable=a('4.1.3')===CREDIT_TABLE;
-  const catalog=services.map(s=>({
-    external_source:'questionario_onboarding', external_id:`servico_${slugify(s['4.2.1'])}`, category:s['4.2.2']||null, name:s['4.2.1'], description:s['4.2.3']||null,
-    billing_unit:'servico', price:parsePrice(s['4.2.5']), notes:s['4.2.4']===FROM_PRICE?`A partir de ${s['4.2.5']||'(valor a definir)'}`:(s['4.2.5']||null), active:true,
-    metadata:{price_type:s['4.2.4']===FROM_PRICE?'from':'fixed', price_pix_raw:s['4.2.5']||null, price_credit:creditTable?parsePrice(s['4.2.6']):null, price_credit_raw:creditTable?(s['4.2.6']||null):null,
-      duration:s['4.2.7']||null, booking_block:s['4.2.8']||null, evaluation:s['4.2.9']||null, booking_mode:s['4.2.10']||null,
-      qualify_before_quote:s['4.2.11']||null, preparation:s['4.2.12']||null, before_after_photo:s['4.2.13']||null,
-      professionals:pros.filter(p=>(p['5.2.2']||[]).includes(s['4.2.1'])).map(p=>p['5.2.1'])}
-  }));
+  const marked=(id,name)=>(state.answers[id]||[]).includes(name);
+  // Se o mesmo serviço foi marcado nas duas listas, vale a regra mais restrita.
+  const catalog=services.map(s=>{ const n=String(s['4.3.1']).trim(), from=marked('4.2.1',n); return {
+    external_source:'questionario_onboarding', external_id:`servico_${slugify(n)}`, category:s.category||null, name:n, description:s['4.3.5']||null,
+    billing_unit:'servico', price:parsePrice(s['4.3.2']), notes:from?`A partir de ${s['4.3.2']||'(valor a definir)'}`:(s['4.3.2']||null), active:true,
+    metadata:{price_type:from?'from':'fixed', price_pix_raw:s['4.3.2']||null, price_credit:creditTable?parsePrice(s['4.3.3']):null, price_credit_raw:creditTable?(s['4.3.3']||null):null,
+      duration:s['4.3.4']||null, booking_block:s['4.3.4']||null,
+      evaluation:marked('4.2.2',n)?'required':marked('4.2.3',n)?'recommended':'none',
+      booking_mode:marked('4.2.5',n)?'team_only':marked('4.2.4',n)?'ai_prebook_team_confirms':'ai_direct',
+      before_after_photo:marked('4.2.6',n), ai_notes:s['4.3.6']||null,
+      professionals:pros.filter(p=>(p['5.2.2']||[]).includes(n)).map(p=>p['5.2.1'])}
+  }; });
   return {
     contract:'noria_onboarding_form_v1',
     review_required:true,
@@ -532,7 +582,7 @@ function buildSystemExport(){
       name:'I&C Salon',
       locations:[{id:'cidade_jardim', name:'I&C Salon Cidade Jardim', address:'Av. das Acácias, 209 - Cidade Jardim', address_complement:a('3.1.1'), reference:a('3.1.2'), access:a('3.1.3'),
         verified:false, verified_source:'Instagram + questionário de onboarding (pendente de conferência)'}],
-      hours:{weekly:a('3.2.1'), highlight_shifts:a('3.2.2'), start_grid:a('3.2.3'), booking_window:a('3.2.4'), out_of_hours_behavior:a('3.2.5'), team_response_hours:a('3.2.6')},
+      hours:{weekly:a('3.2.1'), highlight_shifts:a('3.2.2'), booking_window:a('3.2.3'), team_response_hours:a('3.2.4')},
       not_offered:['Unha de gel','Acrigel','Fibra','Unha postiça','Unha realista','Henna na sobrancelha','Pacote Dia da Noiva'],
       not_offered_alternative:a('4.1.1'), products:{sells:a('4.1.2'), details:a('4.1.2a')},
       evaluation:{free_in_person_no_photo:true, final_price_only_up:true, scale_measures:a('6.1.1'), highlight_test:a('6.1.2'), ai_can_book:a('6.1.3')},

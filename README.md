@@ -16,7 +16,13 @@ menores com os pais e as 5 simulações de conversa da reunião.
 
 O questionário pergunta só o que falta: horários, responsáveis, a ficha de cada serviço
 (a lista dos 21 serviços já vem preenchida), quem faz cada serviço, medidas da balança,
-química, pagamento e regras de agenda. Também pede para esclarecer uma contradição da
+química, pagamento e regras de agenda.
+
+As regras que valem para vários serviços são listas de marcação (seção 4.2), não uma
+pergunta repetida em cada ficha: preço “a partir de”, avaliação obrigatória ou recomendada,
+pré-agenda, agendamento só pela equipe e foto de antes e depois. Elas já vêm marcadas com o
+que foi combinado na reunião. A ficha de cada serviço (4.3) fica só com nome, preço, duração,
+descrição e observações. Também pede para esclarecer uma contradição da
 reunião: mechas de 4–5 h num turno da manhã de 09h30 às 12h00 (pergunta 3.2.2).
 
 A IA se apresenta como integrante da equipe, como combinado, mas não nega ser uma IA
