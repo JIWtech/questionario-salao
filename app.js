@@ -62,8 +62,7 @@ const sections = [
     {title:'3.2 Horários', questions:[
       weekGrid('3.2.1','Horário de funcionamento do salão em cada dia'),
       q('3.2.2','As mechas levam de 4 a 5 horas, mas o turno da manhã citado na reunião vai das 09h30 às 12h00. Qual é o horário real de início e fim dos turnos de mechas (manhã e tarde)?'),
-      q('3.2.3','Com quanta antecedência mínima a cliente pode agendar? E até quantos dias à frente?','text'),
-      q('3.2.4','Em que horário a equipe responde o WhatsApp?','text')
+      q('3.2.3','Com quanta antecedência mínima a cliente pode agendar? E até quantos dias à frente?','text')
     ]}
   ]},
   {title:'4. Serviços', subsections:[
@@ -147,16 +146,13 @@ const sections = [
     {title:'10.1 Encaminhamento para a equipe', questions:[
       multi('10.1.1','Em quais situações a IA deve chamar a equipe?',['Pré-agendamento de mechas ou química','Cliente pediu uma pessoa','Reclamação','Cancelamento ou remarcação','Comprovante de sinal','Dúvida técnica sobre o cabelo','Reação ou problema após procedimento','Outro'],{other:true}),
       q('10.1.2','Qual mensagem padrão a IA envia ao chamar a equipe?'),
-      choice('10.1.3','Como devem ficar as colunas do Kanban (painel de conversas)?',['Padrão sugerido: Conversas IA > Aguardando humano > Verificar Sinal > Em atendimento humano > Agendamentos > Finalizadas > Conversas abandonadas > Follow-ups','Quero outras colunas'],{followupOn:'Quero outras colunas',followupId:'10.1.3a',followupText:'Quais colunas, nesta ordem?'}),
-      yesNo('10.1.4','Depois de chamar a equipe, a IA deve ficar em silêncio naquela conversa?')
-    ]},
+      choice('10.1.3','Como devem ficar as colunas do Kanban (painel de conversas)?',['Padrão sugerido: Conversas IA > Aguardando humano > Verificar Sinal > Em atendimento humano > Agendamentos > Finalizadas > Conversas abandonadas > Follow-ups','Quero outras colunas'],{followupOn:'Quero outras colunas',followupId:'10.1.3a',followupText:'Quais colunas, nesta ordem?'})    ]},
     {title:'10.2 Mensagens automáticas e contatos', questions:[
       yesNo('10.2.1','A IA deve entender mensagens de áudio?'),
       yesNo('10.2.2','Existem contatos que só devem ser atendidos por pessoas? (fornecedores, família, equipe)',{followupOn:'Sim',followupId:'10.2.2a',followupText:'Liste os números ou categorias.'}),
-      choice('10.2.3','Quando a cliente parar de responder no meio do agendamento, a IA deve retomar?',['Sim, depois de algumas horas','Sim, no dia seguinte','Não retomar','Outro'],{other:true}),
-      yesNo('10.2.4','Deseja mensagens de retorno para manutenção (ex.: retoque de raiz, cronograma capilar)?',{followupOn:'Sim',followupId:'10.2.4a',followupText:'Para quais serviços e depois de quantos dias?'}),
-      yesNo('10.2.5','Deseja enviar promoções pelo WhatsApp para clientes antigas?',{followupOn:'Sim',followupId:'10.2.5a',followupText:'Com que frequência? Como a cliente pede para não receber?'}),
-      q('10.2.6','Qual mensagem de agradecimento deve ser enviada depois do atendimento?')
+      yesNo('10.2.3','Deseja mensagens de retorno para manutenção (ex.: retoque de raiz, cronograma capilar)?',{followupOn:'Sim',followupId:'10.2.3a',followupText:'Para quais serviços e depois de quantos dias?'}),
+      yesNo('10.2.4','Deseja enviar promoções pelo WhatsApp para clientes antigas?',{followupOn:'Sim',followupId:'10.2.4a',followupText:'Com que frequência? Como a cliente pede para não receber?'}),
+      q('10.2.5','Qual mensagem de agradecimento deve ser enviada depois do atendimento?')
     ]},
     {title:'10.3 Validação', questions:[
       q('10.3.1','Quais são as cinco perguntas mais frequentes das clientes?'),
@@ -230,7 +226,7 @@ const scenarios = [
 const emptyState = () => ({
   answers:Object.fromEntries(Object.entries(SEED_CHECKS).map(([id,names])=>[id,[...names]])),
   repeaters:{services:SEED_SERVICES.map(s=>({...s})), pros:[{'5.2.1':'César'},{'5.2.1':'Ítalo'},{},{}], incompat:[{}]},
-  scenarios:{}, meta:{}, final:{}, schema:5
+  scenarios:{}, meta:{}, final:{}, schema:6
 });
 const repeaterDrawers = {};
 let state = loadState();
@@ -243,16 +239,22 @@ function loadState(){
 // v2 → v3: saíram 3.2.3 (horários fixos) e 3.2.5 (fora do horário); 3.2.4 e 3.2.6 viraram 3.2.3 e 3.2.4.
 // v3 → v4: as escolhas repetidas em cada ficha de serviço viraram as listas de marcação 4.2.x; as fichas passaram a 4.3.x.
 // v4 → v5: saiu 2.1.3 (resposta quando perguntam se é robô); 2.1.4 virou 2.1.3.
+// v5 → v6: saíram 3.2.4 (horário do WhatsApp), 10.1.4 (silêncio após chamar a equipe) e 10.2.3 (retomar conversa); 10.2.4–10.2.6 viraram 10.2.3–10.2.5.
 function migrate(saved){
   const version=saved.schema||2;
-  if(version>=5) return saved;
+  if(version>=6) return saved;
   const old=saved.answers||{}, answers={...old}; let repeaters=saved.repeaters;
   if(version<3){
     ['3.2.3','3.2.4','3.2.5','3.2.6'].forEach(id=>{ delete answers[id]; delete answers[id+'__other']; });
     Object.entries({'3.2.4':'3.2.3','3.2.6':'3.2.4'}).forEach(([from,to])=>{ if(from in old) answers[to]=old[from]; });
   }
-  ['2.1.3','2.1.3__other','2.1.4'].forEach(id=>delete answers[id]);
-  if('2.1.4' in old) answers['2.1.3']=old['2.1.4'];
+  if(version<5){
+    ['2.1.3','2.1.3__other','2.1.4'].forEach(id=>delete answers[id]);
+    if('2.1.4' in old) answers['2.1.3']=old['2.1.4'];
+  }
+  const before={...answers};
+  ['3.2.4','10.1.4','10.2.3','10.2.3__other','10.2.4','10.2.4a','10.2.5','10.2.5a','10.2.6'].forEach(id=>delete answers[id]);
+  Object.entries({'10.2.4':'10.2.3','10.2.4a':'10.2.3a','10.2.5':'10.2.4','10.2.5a':'10.2.4a','10.2.6':'10.2.5'}).forEach(([from,to])=>{ if(from in before) answers[to]=before[from]; });
   const oldServices=repeaters?.services;
   if(version<4 && Array.isArray(oldServices)){
     const name=s=>String(s['4.2.1']||'').trim();
@@ -267,7 +269,7 @@ function migrate(saved){
     }).filter(([,v])=>isAnsweredValue(v))));
     repeaters={...repeaters, services};
   }
-  return {...saved, answers, repeaters, schema:5};
+  return {...saved, answers, repeaters, schema:6};
 }
 // Mantém as listas de marcação em dia quando um serviço é renomeado (to) ou removido (to vazio).
 function renameService(from,to){
@@ -584,7 +586,7 @@ function buildSystemExport(){
       name:'I&C Salon',
       locations:[{id:'cidade_jardim', name:'I&C Salon Cidade Jardim', address:'Av. das Acácias, 209 - Cidade Jardim', address_complement:a('3.1.1'), reference:a('3.1.2'), access:a('3.1.3'),
         verified:false, verified_source:'Instagram + questionário de onboarding (pendente de conferência)'}],
-      hours:{weekly:a('3.2.1'), highlight_shifts:a('3.2.2'), booking_window:a('3.2.3'), team_response_hours:a('3.2.4')},
+      hours:{weekly:a('3.2.1'), highlight_shifts:a('3.2.2'), booking_window:a('3.2.3')},
       not_offered:['Unha de gel','Acrigel','Fibra','Unha postiça','Unha realista','Henna na sobrancelha','Pacote Dia da Noiva'],
       not_offered_alternative:a('4.1.1'), products:{sells:a('4.1.2'), details:a('4.1.2a')},
       evaluation:{free_in_person_no_photo:true, final_price_only_up:true, scale_measures:a('6.1.1'), highlight_test:a('6.1.2'), ai_can_book:a('6.1.3')},
@@ -606,13 +608,13 @@ function buildSystemExport(){
       no_slot:a('7.2.1'), waitlist:{exists:a('7.2.2'), rules:a('7.2.2a')}, multi_service:a('7.2.3'), third_party:{allowed:a('7.2.4'), data:a('7.2.4a')}, reminder:{enabled:a('7.2.5'), lead:a('7.2.5a')}
     },
     scenarios:Object.fromEntries(scenarios.map(([id,text])=>[id,{situation:text,answer:state.scenarios?.[id]?.answer||null,route:state.scenarios?.[id]?.route||null}])),
-    handoff:{triggers:a('10.1.1')||[], message:a('10.1.2'), silence_after_handoff:a('10.1.4'), return_to_ai_by:owners['Pode devolver a conversa para a IA']||null, complaints_owner:owners['Recebe reclamações']||null},
+    handoff:{triggers:a('10.1.1')||[], message:a('10.1.2'),return_to_ai_by:owners['Pode devolver a conversa para a IA']||null, complaints_owner:owners['Recebe reclamações']||null},
     kanban:a('10.1.3')==='Quero outras colunas'?{custom:true, columns_raw:a('10.1.3a')}:{custom:false, columns:[
       {name:'Conversas IA',automation_key:'conversas_ia'},{name:'Aguardando humano',automation_key:'aguardando_humano'},{name:'Verificar Sinal',automation_key:'verificar_sinal'},
       {name:'Em atendimento humano',automation_key:'com_humano'},{name:'Agendamentos',automation_key:'agendamentos'},{name:'Finalizadas',automation_key:'finalizadas'},
       {name:'Conversas abandonadas',automation_key:'conversas_abandonadas'},{name:'Follow Ups',automation_key:'follow_ups'}]},
-    automation:{audio_enabled:a('10.2.1'), contact_exclusion:{enabled:a('10.2.2'), list_raw:a('10.2.2a')}, follow_up:a('10.2.3'),
-      maintenance_reminders:{enabled:a('10.2.4'), rules:a('10.2.4a')}, broadcasts:{enabled:a('10.2.5'), rules:a('10.2.5a')}, closing_message:a('10.2.6')},
+    automation:{audio_enabled:a('10.2.1'), contact_exclusion:{enabled:a('10.2.2'), list_raw:a('10.2.2a')},
+      maintenance_reminders:{enabled:a('10.2.3'), rules:a('10.2.3a')}, broadcasts:{enabled:a('10.2.4'), rules:a('10.2.4a')}, closing_message:a('10.2.5')},
     validation:{faq:a('10.3.1'), forbidden_errors:a('10.3.2'), approver:owners['Aprova mudanças de preço e regras']||null, test_cases:a('10.3.3')},
     raw_state:state
   };
