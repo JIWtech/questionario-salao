@@ -1,12 +1,22 @@
 const STORAGE_KEY = 'noria_questionario_ic_salon_v1';
-const SPECIAL = ['Ainda não definido','Não se aplica','Encaminhar para a equipe'];
+const UNDEF = 'Ainda não definido', NA = 'Não se aplica', TO_TEAM = 'Encaminhar para a equipe';
 const WEEKDAYS = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo','Feriados'];
 const FROM_PRICE = 'A partir de (valor final após avaliação)';
 const PRE_BOOK = 'A IA pré-agenda e a equipe confirma';
 
-const q = (id, text, type='textarea', extra={}) => ({id,text,type,...extra});
-const yesNo = (id,text,extra={}) => q(id,text,'radio',{options:['Sim','Não',...SPECIAL],...extra});
-const choice = (id,text,options,extra={}) => q(id,text,'radio',{options:[...options,...SPECIAL],...extra});
+// Atalhos por pergunta: todas recebem "Ainda não definido", exceto as de fato/confirmação (plain).
+// "Não se aplica" só onde a pergunta pode não existir; "Encaminhar para a equipe" só em condutas com a cliente.
+const SHORTCUT_RULES = {
+  plain:['1.1.3','1.2.1','2.1.1','3.1.1','3.1.3','4.1.1','4.1.3','4.1.4','5.1.1','5.1.4','5.4.3','6.2.2','7.1.2','7.1.4','7.2.1','10.2.2'],
+  na:['1.1.2','1.1.7','2.1.4','2.2.3','5.2.1','7.1.5','7.2.5'],
+  team:['4.1.2','5.2.2','6.2.3']
+};
+const shortcutsFor = id => SHORTCUT_RULES.plain.includes(id) ? [] :
+  [UNDEF, ...(SHORTCUT_RULES.na.includes(id)?[NA]:[]), ...(SHORTCUT_RULES.team.includes(id)?[TO_TEAM]:[])];
+
+const q = (id, text, type='textarea', extra={}) => ({id,text,type,quick:shortcutsFor(id),...extra});
+const yesNo = (id,text,extra={}) => q(id,text,'radio',{options:['Sim','Não',...shortcutsFor(id)],...extra});
+const choice = (id,text,options,extra={}) => q(id,text,'radio',{options:[...options,...shortcutsFor(id)],...extra});
 const pick = (id,text,options,extra={}) => q(id,text,'radio',{options,...extra});
 const multi = (id,text,options,extra={}) => q(id,text,'radio',{options,multi:true,...extra});
 const weekGrid = (id,text,extra={}) => q(id,text,'grid',{keys:WEEKDAYS,placeholder:'ex.: 09h–19h ou Fechado',...extra});
@@ -101,10 +111,10 @@ const sections = [
   {title:'7. Pagamento e regra de sinal', subsections:[
     {title:'7.1 Formas de pagamento', questions:[
       multi('7.1.1','Quais formas de pagamento são aceitas?',['Dinheiro','Pix','Cartão de débito','Cartão de crédito','Outro'],{other:true}),
-      choice('7.1.2','Combinamos: a IA informa o valor do Pix/dinheiro e só fala do valor no cartão de crédito se a cliente perguntar. Confirma?',['Sim, confirmo','Não, há correções'],{followupOn:'Não, há correções',followupId:'7.1.2a',followupText:'Qual é a regra?'}),
-      choice('7.1.3','Como é calculado o valor no cartão de crédito?',['Acréscimo percentual sobre o valor do Pix','Tabela própria (preenchida em cada ficha de serviço)','Outro'],{other:true,followupOn:'Acréscimo percentual sobre o valor do Pix',followupId:'7.1.3a',followupText:'Qual percentual?'}),
-      choice('7.1.4','O débito tem o mesmo valor do Pix?',['Sim','Não, tem o valor do crédito','Outro'],{other:true}),
-      q('7.1.5','Há parcelamento? Em quantas vezes e a partir de qual valor?','text'),
+      choice('7.1.2','Combinamos: a IA informa o valor do Pix/dinheiro e só fala do valor no cartão de crédito se a cliente perguntar. Confirma?',['Sim, confirmo','Não, há correções'],{condition:{id:'7.1.1',includes:'Cartão de crédito'},followupOn:'Não, há correções',followupId:'7.1.2a',followupText:'Qual é a regra?'}),
+      choice('7.1.3','Como é calculado o valor no cartão de crédito?',['Acréscimo percentual sobre o valor do Pix','Tabela própria (preenchida em cada ficha de serviço)','Outro'],{other:true,condition:{id:'7.1.1',includes:'Cartão de crédito'},followupOn:'Acréscimo percentual sobre o valor do Pix',followupId:'7.1.3a',followupText:'Qual percentual?'}),
+      choice('7.1.4','O débito tem o mesmo valor do Pix?',['Sim','Não, tem o valor do crédito','Outro'],{other:true,condition:{id:'7.1.1',includes:'Cartão de débito'}}),
+      q('7.1.5','Há parcelamento? Em quantas vezes e a partir de qual valor?','text',{condition:{id:'7.1.1',includes:'Cartão de crédito'}}),
       q('7.1.6','Qual é a chave Pix e o nome do favorecido?','text'),
       choice('7.1.7','A IA pode oferecer desconto?',['Nunca: só os valores cadastrados','Outro'],{other:true})
     ]},
@@ -216,7 +226,7 @@ const SEED_SERVICES = [
   service('Penteado','Maquiagem e penteado',{'4.2.3':'Não consta no panfleto físico.'})
 ];
 
-const IA='Continuar com IA', TEAM='Encaminhar para a equipe';
+const IA='Continuar com IA';
 const scenarios = [
   ['9.1.1','“Oi, queria saber mais sobre os serviços.”','Dar bom dia/boa tarde, se apresentar como nova na equipe, perguntar o nome e qual serviço a cliente procura. Não enviar o catálogo completo logo de cara.',IA],
   ['9.1.2','“Quanto custa fazer as unhas?”','Antes de passar preço ou horário, perguntar se é só mão, só pé ou pé e mão, porque cada opção ocupa um tempo diferente na agenda.',IA],
@@ -337,15 +347,15 @@ function renderQuestion(item, store=state.answers, prefix='', quick=true){
     if(item.type==='text') control.type='text'; else control.rows=3;
     control.value=saved; control.dataset.field=fieldKey;
     control.addEventListener('input',()=>{store[item.id]=control.value; saveState();}); card.appendChild(control);
-    if(quick) addQuickButtons(card,control,store,item.id);
+    if(quick && item.quick.length) addQuickButtons(card,control,store,item.id,item.quick);
   }
   renderFollowupState(card,item,store);
   return card;
 }
 
-function addQuickButtons(card,control,store,key){
+function addQuickButtons(card,control,store,key,options){
   const quick=document.createElement('div'); quick.className='quick-actions';
-  SPECIAL.forEach(txt=>{ const b=document.createElement('button'); b.type='button'; b.textContent=txt; b.onclick=()=>{control.value=txt;store[key]=txt;saveState();}; quick.appendChild(b); });
+  options.forEach(txt=>{ const b=document.createElement('button'); b.type='button'; b.textContent=txt; b.onclick=()=>{control.value=txt;store[key]=txt;saveState();}; quick.appendChild(b); });
   card.appendChild(quick);
 }
 
@@ -358,7 +368,7 @@ function renderFollowupState(card,item,store){
     const lab=document.createElement('label'); lab.textContent=text;
     const ta=document.createElement('textarea'); ta.rows=2; ta.value=store[id]||'';
     ta.addEventListener('input',()=>{store[id]=ta.value;saveState();}); lab.appendChild(ta); wrap.appendChild(lab); card.appendChild(wrap);
-    addQuickButtons(wrap,ta,store,id);
+    addQuickButtons(wrap,ta,store,id,[UNDEF]);
   });
 }
 
@@ -398,7 +408,7 @@ function renderScenarios(container){
     const label=document.createElement('div'); label.className='question-label'; label.innerHTML=`<span class="question-number">${id}</span>${esc(text)}`; card.appendChild(label);
     const ta=document.createElement('textarea'); ta.rows=3; ta.placeholder='Resposta desejada'; ta.value=data.answer||''; ta.addEventListener('input',()=>{data.answer=ta.value;saveState();}); card.appendChild(ta);
     const choices=document.createElement('div'); choices.className='choice-grid compact';
-    [IA,TEAM].forEach(opt=>{ const lab=document.createElement('label'); lab.className='choice-pill'; const inp=document.createElement('input'); inp.type='radio'; inp.name=`route-${id}`; inp.value=opt; inp.checked=data.route===opt; inp.onchange=()=>{data.route=opt;saveState();}; const span=document.createElement('span'); span.textContent=opt; lab.append(inp,span); choices.appendChild(lab); });
+    [IA,TO_TEAM].forEach(opt=>{ const lab=document.createElement('label'); lab.className='choice-pill'; const inp=document.createElement('input'); inp.type='radio'; inp.name=`route-${id}`; inp.value=opt; inp.checked=data.route===opt; inp.onchange=()=>{data.route=opt;saveState();}; const span=document.createElement('span'); span.textContent=opt; lab.append(inp,span); choices.appendChild(lab); });
     card.appendChild(choices); container.appendChild(card);
   });
 }
