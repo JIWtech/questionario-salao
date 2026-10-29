@@ -5,25 +5,22 @@ Levantamento de regras de atendimento e agenda para configurar a NORIA no
 interativos da NORIA: site estático, perguntas condicionais, fichas repetíveis, cenários
 de conversa com destino IA/equipe, salvamento no navegador e exportação em PDF.
 
-## O que já vem preenchido (o salão só revisa)
+## O que já está definido (não é perguntado de novo)
 
-Da reunião com o salão:
+Tudo o que foi combinado na reunião e o que está no Instagram aparece na seção 1,
+"O que já foi combinado", só para leitura, com um único campo para correções:
+apresentação da IA, equipe de 4 profissionais sem acesso ao painel, o que o salão não faz,
+preço "a partir de" e pela balança, avaliação presencial gratuita, mechas em meio período com
+pré-agenda, preço no crédito só quando perguntado, sem desconto, regra de sinal após falta,
+menores com os pais e as 5 simulações de conversa da reunião.
 
-- Lista de 21 serviços (cabelo, estética e corpo, sobrancelha, unhas tradicionais,
-  maquiagem e penteado), com preço "a partir de" e avaliação obrigatória nas químicas,
-  mechas em meio período (4–5 h) com pré-agenda confirmada pela equipe e pé e mão a R$ 57,00 no Pix/dinheiro.
-- O que o salão não faz: unha de gel, acrigel, fibra, postiça, realista, henna e Dia da Noiva.
-- Regra de sinal após falta, preço no crédito só quando perguntado, sem desconto,
-  avaliação presencial gratuita e não por foto, preço pela balança, menores com os pais
-  e a IA não pergunta a idade.
-- Profissionais César e Ítalo, sem acesso ao painel (a gestão repassa).
-- As 5 simulações de conversa da reunião, com a resposta combinada.
-
-Do Instagram: endereço Av. das Acácias, 209 – Cidade Jardim e telefone (22) 99963-3775,
-para confirmação.
+O questionário pergunta só o que falta: horários, responsáveis, a ficha de cada serviço
+(a lista dos 21 serviços já vem preenchida), quem faz cada serviço, medidas da balança,
+química, pagamento e regras de agenda. Também pede para esclarecer uma contradição da
+reunião: mechas de 4–5 h num turno da manhã de 09h30 às 12h00 (pergunta 3.2.2).
 
 A IA se apresenta como integrante da equipe, como combinado, mas não nega ser uma IA
-quando a cliente pergunta diretamente (pergunta 1.1.6).
+quando a cliente pergunta diretamente (pergunta 2.1.3).
 
 ## Como as respostas viram configuração
 
