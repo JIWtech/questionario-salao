@@ -25,9 +25,6 @@ que foi combinado na reunião. A ficha de cada serviço (4.3) fica só com nome,
 descrição e observações. Também pede para esclarecer uma contradição da
 reunião: mechas de 4–5 h num turno da manhã de 09h30 às 12h00 (pergunta 3.2.2).
 
-A IA se apresenta como integrante da equipe, como combinado, mas não nega ser uma IA
-quando a cliente pergunta diretamente (pergunta 2.1.3).
-
 ## Como as respostas viram configuração
 
 O botão **Exportar dados para a NORIA (JSON)** gera um rascunho (`review_required: true`).

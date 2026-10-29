@@ -50,8 +50,7 @@ const sections = [
     {title:'2.1 Atendente e linguagem', questions:[
       q('2.1.1','A atendente terá um nome? Se sim, qual?','text'),
       choice('2.1.2','A IA pode usar emojis?',['Sim, com moderação','Só em saudações','Não usar']),
-      choice('2.1.3','Se a cliente perguntar diretamente se está falando com um robô ou uma IA, o que responder?',['Confirmar que é a assistente digital da equipe e seguir o atendimento','Confirmar e oferecer falar com uma pessoa da equipe','Outro'],{other:true,note:'A IA se apresenta como integrante da equipe, como combinado. Por transparência, ela não nega ser uma IA quando a cliente pergunta diretamente.'}),
-      q('2.1.4','Há palavras, gírias ou formas de tratamento que a IA deve evitar? Quais?')
+      q('2.1.3','Há palavras, gírias ou formas de tratamento que a IA deve evitar? Quais?')
     ]}
   ]},
   {title:'3. Funcionamento e agenda', subsections:[
@@ -231,7 +230,7 @@ const scenarios = [
 const emptyState = () => ({
   answers:Object.fromEntries(Object.entries(SEED_CHECKS).map(([id,names])=>[id,[...names]])),
   repeaters:{services:SEED_SERVICES.map(s=>({...s})), pros:[{'5.2.1':'César'},{'5.2.1':'Ítalo'},{},{}], incompat:[{}]},
-  scenarios:{}, meta:{}, final:{}, schema:4
+  scenarios:{}, meta:{}, final:{}, schema:5
 });
 const repeaterDrawers = {};
 let state = loadState();
@@ -243,16 +242,19 @@ function loadState(){
 // Respostas salvas em versões anteriores do questionário:
 // v2 → v3: saíram 3.2.3 (horários fixos) e 3.2.5 (fora do horário); 3.2.4 e 3.2.6 viraram 3.2.3 e 3.2.4.
 // v3 → v4: as escolhas repetidas em cada ficha de serviço viraram as listas de marcação 4.2.x; as fichas passaram a 4.3.x.
+// v4 → v5: saiu 2.1.3 (resposta quando perguntam se é robô); 2.1.4 virou 2.1.3.
 function migrate(saved){
   const version=saved.schema||2;
-  if(version>=4) return saved;
+  if(version>=5) return saved;
   const old=saved.answers||{}, answers={...old}; let repeaters=saved.repeaters;
   if(version<3){
     ['3.2.3','3.2.4','3.2.5','3.2.6'].forEach(id=>{ delete answers[id]; delete answers[id+'__other']; });
     Object.entries({'3.2.4':'3.2.3','3.2.6':'3.2.4'}).forEach(([from,to])=>{ if(from in old) answers[to]=old[from]; });
   }
+  ['2.1.3','2.1.3__other','2.1.4'].forEach(id=>delete answers[id]);
+  if('2.1.4' in old) answers['2.1.3']=old['2.1.4'];
   const oldServices=repeaters?.services;
-  if(Array.isArray(oldServices)){
+  if(version<4 && Array.isArray(oldServices)){
     const name=s=>String(s['4.2.1']||'').trim();
     const marked=(key,values)=>oldServices.filter(s=>name(s)&&values.includes(s[key])).map(name);
     Object.assign(answers,{'4.2.1':marked('4.2.4',[FROM_PRICE]), '4.2.2':marked('4.2.9',['Sim, obrigatória']), '4.2.3':marked('4.2.9',['Recomendada']),
@@ -265,7 +267,7 @@ function migrate(saved){
     }).filter(([,v])=>isAnsweredValue(v))));
     repeaters={...repeaters, services};
   }
-  return {...saved, answers, repeaters, schema:4};
+  return {...saved, answers, repeaters, schema:5};
 }
 // Mantém as listas de marcação em dia quando um serviço é renomeado (to) ou removido (to vazio).
 function renameService(from,to){
@@ -575,7 +577,7 @@ function buildSystemExport(){
     known_facts:KNOWN_FACTS, known_facts_corrections:a('1.1.1'),
     tenant:{name:'I&C Salon', suggested_slug:'ic_salon', industry:'Salão de beleza, estética e bem-estar', segment:'aesthetic_clinic', capability:'standard',
       tone:'friendly', persona_name:a('2.1.1'), greeting:'Oi, tudo bem? Sou nova na equipe, com quem eu falo? Como posso ajudar você hoje?',
-      emoji_policy:a('2.1.2'), ai_disclosure_when_asked:a('2.1.3'), avoid_terms:a('2.1.4'), never_ask:['idade','data de nascimento']},
+      emoji_policy:a('2.1.2'), avoid_terms:a('2.1.3'), never_ask:['idade','data de nascimento']},
     channel:{type:'whatsapp', phone:'5522999633775', operators:owners['Responde o WhatsApp hoje']||null},
     responsibilities:owners,
     business_facts:{
